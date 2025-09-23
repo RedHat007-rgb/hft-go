@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net"
+	"strings"
 
 	pb "github.com/RedHat007-rgb/hft-phase-1-23rd/apps/go-services/ticker-service/proto/ticker"
 	"github.com/RedHat007-rgb/hft-phase-1-23rd/packages/golib/ws"
@@ -19,9 +20,12 @@ type TickerServer struct{
 }
 
 type BinanceTicker struct{
+	EventType string `json:"e"`
+	EventTime *int64 `json:"E"`
 	Symbol string `json:"s"`
-	Volume string `json:"v"`
-	High string	`json:"h"`
+	Price *json.Number `json:"c"`
+	Volume *json.Number `json:"v"`
+
 }
 
 func (s *TickerServer) StreamTicker(req *pb.TickerRequest, stream pb.TickerService_StreamTickerServer) error {
@@ -43,15 +47,20 @@ func (s *TickerServer) StreamTicker(req *pb.TickerRequest, stream pb.TickerServi
                 log.Println("websocket closed for symbol:", symbol)
                 return nil
             }
-            
+            parts:=strings.Split(string(msg),",")
+			if len(parts)<17{
+				log.Fatalf("unexpected msg format")
+			}
             if err := json.Unmarshal(msg, &t); err != nil {
                 log.Println("error while unmarshalling:", err)
                return err
             }
             update := &pb.TickerUpdate{
-                Symbol: t.Symbol,
-                Volume: t.Volume,
-                High:   t.High,
+              Exchange: "Binance",
+			  Symbol: t.Symbol,
+			  Price: t.Price.String(),
+			  Volume: t.Volume.String(),
+			  EventTime: *t.EventTime,
             }
             log.Println("sending update:", update.String())
             if err := stream.Send(update); err != nil {
