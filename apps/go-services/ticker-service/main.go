@@ -24,43 +24,69 @@ type BinanceTicker struct{
 	High string	`json:"h"`
 }
 
-func ( s *TickerServer) StreamTicker(req *pb.TickerRequest,stream pb.TickerService_StreamTickerServer)error{
-	symbol:=req.Symbol
-	url:="wss://stream.binance.com:9443/ws/"+symbol+"@ticker"
-	ctx:=context.Background()
-	chnl:=make(chan []byte)
-	var t BinanceTicker
-	var e error
-	go Connect(ctx,url,chnl)
-		for msg:=range chnl{
-			if err:=json.Unmarshal(msg,&t);err!=nil{
-				log.Println("error while unmarshelling",err)
-			}
-			update:=&pb.TickerUpdate{
-				Symbol:t.Symbol,
-				Volume: t.Volume,
-				High: t.High,
-			}
-			log.Println(update.String())
-			if err:=stream.Send(update);err!=nil{
-				e=err
-			}
-		}
-		return e
+func (s *TickerServer) StreamTicker(req *pb.TickerRequest, stream pb.TickerService_StreamTickerServer) error {
+    symbol := req.Symbol
+    url := "wss://stream.binance.com:9443/ws/" + symbol + "@ticker"
+
+    ctx := stream.Context() 
+    chnl := make(chan []byte, 16) 
+    defer close(chnl)
+    go Connect(ctx, url, chnl)
+    var t BinanceTicker
+    for {
+        select {
+        case <-ctx.Done():
+            log.Println("client disconnected:", ctx.Err())
+            return ctx.Err()
+        case msg, ok := <-chnl:
+            if !ok {
+                log.Println("websocket closed for symbol:", symbol)
+                return nil
+            }
+            
+            if err := json.Unmarshal(msg, &t); err != nil {
+                log.Println("error while unmarshalling:", err)
+               return err
+            }
+            update := &pb.TickerUpdate{
+                Symbol: t.Symbol,
+                Volume: t.Volume,
+                High:   t.High,
+            }
+            log.Println("sending update:", update.String())
+            if err := stream.Send(update); err != nil {
+                log.Println("error sending to client:", err)
+                return err
+            }
+        }
+    }
 }
-func Connect(ctx context.Context,url string,out chan []byte) {
-	wsConn:=ws.ConnectAndStream(url)
-	defer wsConn.Close()
-	defer close(out)
-	for{
-		_,data,err:=wsConn.ReadMessage()
-	if err!=nil{
-		log.Println("error reading message")
-	}
-	  out<-data
-	}
-	
+
+func Connect(ctx context.Context, url string, out chan []byte) {
+    wsConn := ws.ConnectAndStream(url)
+    defer wsConn.Close()
+
+    for {
+        select {
+        case <-ctx.Done():
+            log.Println("stopping websocket reader:", ctx.Err())
+            return
+
+        default:
+            _, data, err := wsConn.ReadMessage()
+            if err != nil {
+                log.Println("error reading websocket message:", err)
+                return
+            }
+            select {
+            case out <- data:
+            case <-ctx.Done():
+                return
+            }
+        }
+    }
 }
+
 
 
 
