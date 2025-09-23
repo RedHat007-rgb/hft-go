@@ -67,9 +67,11 @@ func (x *TickerRequest) GetSymbol() string {
 
 type TickerUpdate struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Symbol        string                 `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Volume        string                 `protobuf:"bytes,2,opt,name=volume,proto3" json:"volume,omitempty"`
-	High          string                 `protobuf:"bytes,3,opt,name=high,proto3" json:"high,omitempty"`
+	Exchange      string                 `protobuf:"bytes,1,opt,name=exchange,proto3" json:"exchange,omitempty"`
+	Symbol        string                 `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Price         string                 `protobuf:"bytes,3,opt,name=price,proto3" json:"price,omitempty"`
+	Volume        string                 `protobuf:"bytes,4,opt,name=volume,proto3" json:"volume,omitempty"`
+	EventTime     int64                  `protobuf:"varint,5,opt,name=eventTime,proto3" json:"eventTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -104,9 +106,23 @@ func (*TickerUpdate) Descriptor() ([]byte, []int) {
 	return file_ticker_proto_rawDescGZIP(), []int{1}
 }
 
+func (x *TickerUpdate) GetExchange() string {
+	if x != nil {
+		return x.Exchange
+	}
+	return ""
+}
+
 func (x *TickerUpdate) GetSymbol() string {
 	if x != nil {
 		return x.Symbol
+	}
+	return ""
+}
+
+func (x *TickerUpdate) GetPrice() string {
+	if x != nil {
+		return x.Price
 	}
 	return ""
 }
@@ -118,11 +134,11 @@ func (x *TickerUpdate) GetVolume() string {
 	return ""
 }
 
-func (x *TickerUpdate) GetHigh() string {
+func (x *TickerUpdate) GetEventTime() int64 {
 	if x != nil {
-		return x.High
+		return x.EventTime
 	}
-	return ""
+	return 0
 }
 
 var File_ticker_proto protoreflect.FileDescriptor
@@ -131,11 +147,13 @@ const file_ticker_proto_rawDesc = "" +
 	"\n" +
 	"\fticker.proto\x12\x06ticker\"'\n" +
 	"\rTickerRequest\x12\x16\n" +
-	"\x06symbol\x18\x01 \x01(\tR\x06symbol\"R\n" +
-	"\fTickerUpdate\x12\x16\n" +
-	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12\x16\n" +
-	"\x06volume\x18\x02 \x01(\tR\x06volume\x12\x12\n" +
-	"\x04high\x18\x03 \x01(\tR\x04high2N\n" +
+	"\x06symbol\x18\x01 \x01(\tR\x06symbol\"\x8e\x01\n" +
+	"\fTickerUpdate\x12\x1a\n" +
+	"\bexchange\x18\x01 \x01(\tR\bexchange\x12\x16\n" +
+	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x14\n" +
+	"\x05price\x18\x03 \x01(\tR\x05price\x12\x16\n" +
+	"\x06volume\x18\x04 \x01(\tR\x06volume\x12\x1c\n" +
+	"\teventTime\x18\x05 \x01(\x03R\teventTime2N\n" +
 	"\rTickerService\x12=\n" +
 	"\fStreamTicker\x12\x15.ticker.TickerRequest\x1a\x14.ticker.TickerUpdate0\x01B\x0eZ\fproto/tickerb\x06proto3"
 
