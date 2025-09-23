@@ -14,7 +14,9 @@ message TickerRequest{
 }
 
 message TickerUpdate{
-    string symbol=1;
-    string volume=2;
-    string high=3;
+    string exchange=1;
+    string symbol=2;
+    string price=3;
+    string volume=4;
+    int64 eventTime=5;
 }
