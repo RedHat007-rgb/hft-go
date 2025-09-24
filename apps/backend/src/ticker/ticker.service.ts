@@ -1,26 +1,24 @@
-import { Injectable } from '@nestjs/common';
-import { CreateTickerDto } from './dto/create-ticker.dto';
-import { UpdateTickerDto } from './dto/update-ticker.dto';
+import {
+  TickerRequest,
+  TickerServiceClientImpl,
+  TickerUpdate,
+} from '@app/common/types/ticker';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import type { ClientGrpc } from '@nestjs/microservices';
+
+import { Observable } from 'rxjs';
 
 @Injectable()
-export class TickerService {
-  create(createTickerDto: CreateTickerDto) {
-    return 'This action adds a new ticker';
+export class TickerService implements OnModuleInit {
+  private tickerService: TickerServiceClientImpl;
+  constructor(@Inject('TickerService') private client: ClientGrpc) {}
+
+  onModuleInit() {
+    this.tickerService =
+      this.client.getService<TickerServiceClientImpl>('TickerService');
   }
 
-  findAll() {
-    return `This action returns all ticker`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} ticker`;
-  }
-
-  update(id: number, updateTickerDto: UpdateTickerDto) {
-    return `This action updates a #${id} ticker`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} ticker`;
+  StreamTicker(request: TickerRequest): Observable<TickerUpdate> {
+    return this.tickerService.StreamTicker(request);
   }
 }
